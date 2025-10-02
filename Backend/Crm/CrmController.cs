@@ -1,20 +1,34 @@
-using Backend.CRM.Model;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Backend.Controllers;
+namespace Backend.Crm;
 
 [ApiController]
 [Route("[controller]")]
 public class CrmController(ConseniorDbContext dbContext, ILogger<CrmController> logger) : ControllerBase
 {
     [HttpGet]
-    public IEnumerable<Customer> GetCustomers() => dbContext.Customers;
+    public IEnumerable<CustomerDto> GetCustomers() => dbContext.Customers
+        .Select(CustomerDto.FromCustomer)
+        .Where(dto => dto != null)!;
 
     [HttpPost]
-    public async Task<Customer> AddCustomer([FromBody] Customer customer)
+    public async Task<CustomerDto> AddCustomer([FromBody] CreateCustomerDto createCustomerDto)
     {
-        var saved = dbContext.Customers.Add(customer);
+        var customer = new Customer()
+        {
+            TenantKey = "ERG"
+        };
+        dbContext.Customers.Add(customer);
+        customer.PersonalDataTli.Add(new CustomerPersonalData
+        {
+            PrefixTitle = createCustomerDto.PrefixTitle,
+            FirstName = createCustomerDto.FirstName,
+            LastName = createCustomerDto.LastName,
+            DisplayName = createCustomerDto.DisplayName,
+            PostfixTitle = createCustomerDto.PostfixTitle,
+            DateOfBirth = createCustomerDto.DateOfBirth,
+        });
         await dbContext.SaveChangesAsync();
-        return saved.Entity;
+        return CustomerDto.FromCustomer(customer)!;
     }
 }

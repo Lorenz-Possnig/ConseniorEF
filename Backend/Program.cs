@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+
 namespace Backend;
 
 public class Program
@@ -9,7 +11,11 @@ public class Program
         // Add services to the container.
         var services = builder.Services;
         services.AddScoped<ConseniorDbContext>();
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
+            });
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
